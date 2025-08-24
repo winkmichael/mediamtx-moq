@@ -30,6 +30,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/recordcleaner"
 	"github.com/bluenviron/mediamtx/internal/rlimit"
 	"github.com/bluenviron/mediamtx/internal/servers/hls"
+	"github.com/bluenviron/mediamtx/internal/servers/moq"
 	"github.com/bluenviron/mediamtx/internal/servers/rtmp"
 	"github.com/bluenviron/mediamtx/internal/servers/rtsp"
 	"github.com/bluenviron/mediamtx/internal/servers/srt"
@@ -96,6 +97,7 @@ type Core struct {
 	hlsServer       *hls.Server
 	webRTCServer    *webrtc.Server
 	srtServer       *srt.Server
+	moqServer       *moq.Server
 	api             *api.API
 	confWatcher     *confwatcher.ConfWatcher
 
@@ -602,6 +604,28 @@ func (p *Core) createResources(initial bool) error {
 			return err
 		}
 		p.srtServer = i
+	}
+
+	// Initialize MoQ server if configured
+	if p.conf.MoQAddress != "" &&
+		p.moqServer == nil {
+		i := &moq.Server{
+			Address:      p.conf.MoQAddress,
+			Encryption:   p.conf.MoQEncryption,
+			ServerKey:    p.conf.MoQServerKey,
+			ServerCert:   p.conf.MoQServerCert,
+			AllowOrigin:  p.conf.MoQAllowOrigin,
+			ReadTimeout:  p.conf.ReadTimeout,
+			PathManager:  p.pathManager,
+			Parent:       p,
+		}
+		err = i.Initialize()
+		if err != nil {
+			p.Log(logger.Warn, "MoQ server initialization failed: %v", err)
+			// Don't fail startup if MoQ fails to initialize
+		} else {
+			p.moqServer = i
+		}
 	}
 
 	if p.conf.API &&

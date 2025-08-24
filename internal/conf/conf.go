@@ -291,6 +291,13 @@ type Conf struct {
 	SRT        bool   `json:"srt"`
 	SRTAddress string `json:"srtAddress"`
 
+	// MoQ server
+	MoQAddress     string `json:"moqAddress"`
+	MoQEncryption  bool   `json:"moqEncryption"`
+	MoQServerKey   string `json:"moqServerKey"`
+	MoQServerCert  string `json:"moqServerCert"`
+	MoQAllowOrigin string `json:"moqAllowOrigin"`
+
 	// Record (deprecated)
 	Record                *bool         `json:"record,omitempty"`                // deprecated
 	RecordPath            *string       `json:"recordPath,omitempty"`            // deprecated
