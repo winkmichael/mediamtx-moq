@@ -1,0 +1,20 @@
+name: nightly_binaries
+
+on:
+  workflow_dispatch:
+
+jobs:
+  nightly_binaries:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - run: make binaries
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: binaries
+        path: binaries

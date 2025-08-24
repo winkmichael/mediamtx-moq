@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<!--
+    MoQ Web Player - Contributed by WINK Streaming (https://www.wink.co) - 2025
+    Live demo: https://moq.wink.co/moq-player.html
+    Ultra-low latency streaming using Media over QUIC protocol
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoQ Player - WINK Streaming</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo {
+            height: 66px;
+            object-fit: contain;
+        }
+        
+        .brand {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .brand:hover {
+            color: #3b82f6;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: #666666;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            color: #1a1a1a;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+        
+        .hero-section {
+            text-align: center;
+            margin-bottom: 64px;
+            padding: 48px 0;
+        }
+        
+        .title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+            letter-spacing: -0.02em;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: #666666;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 32px;
+            margin-bottom: 64px;
+        }
+        
+        .player-card {
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .player-card:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .player-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #1a1a1a;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-experimental {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-stable {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        video, canvas {
+            width: 100%;
+            height: 280px;
+            background: #f8fafc;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .control-btn:hover {
+            background: #374151;
+            transform: translateY(-1px);
+        }
+        
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        
+        .info-panel {
+            background: #fefefe;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            opacity: 0.8;
+        }
+        
+        .info-value {
+            font-weight: bold;
+        }
+        
+        .connection-status {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #2d2d2d;
+            border-radius: 10px;
+            border: 1px solid #3d3d3d;
+        }
+        
+        .moq-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .moq-connected {
+            background: #4ade80;
+        }
+        
+        .moq-connecting {
+            background: #fbbf24;
+        }
+        
+        .moq-disconnected {
+            background: #ef4444;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+            }
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+        
+        .footer-section {
+            background: #fefefe;
+            border-top: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+        }
+        
+        .footer-section h4 {
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .footer-section p {
+            color: #6b7280;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+            margin: 12px 0;
+        }
+        
+        .footer-section li {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .footer-section a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .footer-section a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 12px 16px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .container {
+                padding: 32px 16px;
+            }
+            
+            .title {
+                font-size: 36px;
+            }
+            
+            .subtitle {
+                font-size: 18px;
+            }
+            
+            .players-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .player-card {
+                padding: 20px;
+            }
+            
+            video, canvas {
+                height: 240px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <img src="https://www.wink.co/img/winklogo_round.jpg" alt="Wink Logo" class="logo">
+                <a href="https://www.wink.co" class="brand">WINK Streaming</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="hero-section">
+            <h1 class="title">MoQ Media Player</h1>
+            <div class="subtitle">Media over QUIC - Next Generation Streaming Protocol</div>
+        </div>
+
+        <div class="players-grid">
+            <!-- HLS Player -->
+            <div class="player-card">
+                <div class="player-title">
+                    HLS Stream
+                    <span class="status-badge status-stable">Stable</span>
+                </div>
+                <video id="hlsVideo" controls autoplay muted></video>
+                <div class="controls">
+                    <button class="control-btn" onclick="playHLS()">Play HLS</button>
+                    <button class="control-btn" onclick="stopHLS()">Stop</button>
+                </div>
+                <div class="info-panel">
+                    <div class="info-row">
+                        <span class="info-label">Protocol:</span>
+                        <span class="info-value">HLS (HTTP Live Streaming)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Port:</span>
+                        <span class="info-value">8888</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" id="hlsStatus">Ready</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MoQ Player -->
+            <div class="player-card">
+                <div class="player-title">
+                    MoQ Stream
+                    <span class="status-badge status-experimental">Experimental</span>
+                </div>
+                <p id="audioStatus" style="color: #059669; font-size: 14px; margin-bottom: 16px; font-weight: 500;">✅ Audio Enabled (AAC @ 44.1/48kHz)</p>
+                <video id="moqVideo" controls autoplay muted></video>
+                <div class="controls">
+                    <button class="control-btn" onclick="connectMoQ(true)">Play with Audio</button>
+                    <button class="control-btn" onclick="connectMoQ(false)">Play without Audio</button>
+                    <button class="control-btn" onclick="disconnectMoQ()">Disconnect</button>
+                </div>
+                <div class="info-panel">
+                    <div class="info-row">
+                        <span class="info-label">Protocol:</span>
+                        <span class="info-value">MoQ over QUIC</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Port:</span>
+                        <span class="info-value">4443 (UDP)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" id="moqStatus">Not Connected</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Transport:</span>
+                        <span class="info-value" id="moqTransport">-</span>
+                    </div>
+                    <div class="info-row" style="border-top: 1px solid #e5e5e5; margin-top: 8px; padding-top: 8px;">
+                        <span class="info-label">Decoder:</span>
+                        <span class="info-value" id="decoderInfo">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Hardware Accel:</span>
+                        <span class="info-value" id="hwAccel">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Frames Decoded:</span>
+                        <span class="info-value" id="framesDecoded">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Frames Dropped:</span>
+                        <span class="info-value" id="framesDropped">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Decode Time:</span>
+                        <span class="info-value" id="decodeTime">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Latency:</span>
+                        <span class="info-value" id="latency">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Buffer:</span>
+                        <span class="info-value" id="bufferLevel">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">FPS:</span>
+                        <span class="info-value" id="fps">-</span>
+                    </div>
+                </div>
+                <div class="error-message" id="moqError"></div>
+            </div>
+        </div>
+
+        <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-top: 24px; margin-bottom: 24px;">
+            <h3 style="color: #92400e; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center;">
+                ⚠️ Browser Playback Limitations - Testing Demo Only
+            </h3>
+            <p style="color: #78350f; margin-bottom: 12px; line-height: 1.6;">
+                <strong>Important:</strong> The poor playback performance you're experiencing is NOT due to the MoQ protocol itself, but rather the immature state of browser-based WebCodecs API and JavaScript video decoding. This demo uses experimental browser APIs that require:
+            </p>
+            <ul style="color: #78350f; margin: 12px 0; padding-left: 24px; line-height: 1.6;">
+                <li>JavaScript parsing of every video frame (single-threaded bottleneck)</li>
+                <li>WebCodecs API for decoding (experimental, not optimized)</li>
+                <li>Manual canvas rendering (no hardware overlay support)</li>
+                <li>Multiple memory copies between JavaScript and browser decoder</li>
+            </ul>
+            <p style="color: #78350f; margin-bottom: 16px; line-height: 1.6;">
+                <strong>The MoQ Protocol itself is excellent</strong> - it provides ultra-low latency, firewall traversal via QUIC/HTTP3, and CDN-friendly distribution. Native applications using MoQ achieve full framerate with minimal CPU usage. This browser demo exists purely for testing and development purposes.
+            </p>
+            <div style="background: white; border-radius: 8px; padding: 16px; margin-top: 16px;">
+                <p style="color: #1a1a1a; margin: 0; line-height: 1.6;">
+                    <strong>Why MoQ Will Win:</strong> Thanks to the groundbreaking work by <a href="https://github.com/bluenviron/mediamtx">MediaMTX</a> creator <strong>aler9</strong>, along with contributions from Cloudflare, Facebook, and the IETF working group, MoQ has the potential to finally solve the streaming trilemma: <strong>low latency + firewall friendly + CDN scalable</strong>.
+                </p>
+                <p style="color: #1a1a1a; margin: 8px 0 0 0; line-height: 1.6;">
+                    <strong>MoQ vs Other Protocols:</strong> Unlike WebRTC (overly complex, poor scalability, endless compatibility issues), MoQ leverages proven HTTP/3 infrastructure. While SRT is excellent for point-to-point streaming, MoQ's native CDN integration makes it superior for internet-scale distribution. WebRTC's peer-to-peer architecture and signaling complexity have held back low-latency streaming for years - MoQ finally provides a clean, scalable alternative that "just works" with existing web infrastructure.
+                </p>
+                <p style="color: #1a1a1a; margin: 8px 0 0 0; line-height: 1.6; border-top: 1px solid #e5e5e5; padding-top: 12px;">
+                    <strong>WINK Streaming</strong>, who contributed this MoQ implementation to MediaMTX, is committed to continuing development and fostering MoQ as the next generation standard for low-latency live video streaming. We believe MoQ represents the future of streaming technology and will actively support its adoption across the industry through open-source contributions, testing tools, and production deployments. <strong>For production use, deploy MediaMTX with native MoQ clients, not this browser demo.</strong>
+                </p>
+                <p style="color: #1a1a1a; margin: 8px 0 0 0; line-height: 1.6; background: #f0f9ff; padding: 12px; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                    MediaMTX by <strong>aler9</strong> is a groundbreaking MIT-licensed media server that's revolutionizing live streaming infrastructure. Like FFmpeg transformed video processing, MediaMTX is becoming the essential foundation for real-time media delivery. Its elegant architecture and broad protocol support (RTSP, RTMP, HLS, WebRTC, SRT, and now MoQ) make it the Swiss Army knife of streaming servers.
+                </p>
+            </div>
+        </div>
+
+        <div class="connection-status">
+            <h3>Server Connection Status</h3>
+            <p>
+                <span class="moq-status moq-disconnected" id="serverStatus"></span>
+                <span id="serverStatusText">MoQ Server: Checking...</span>
+            </p>
+            <p style="opacity: 0.8; font-size: 0.9em;">
+                Server: moq.wink.co | Certificate Valid Until: August 23, 2026
+            </p>
+        </div>
+        
+        <div style="background: white; border-radius: 12px; padding: 24px; margin-top: 24px; border: 1px solid #e5e5e5;">
+            <h3 style="color: #1a1a1a; margin-bottom: 20px;">MoQ Implementation in MediaMTX</h3>
+            
+            <h4 style="color: #374151; margin-top: 24px; margin-bottom: 16px; font-size: 16px;">Configuration (mediamtx.yml)</h4>
+            <div style="background: #1e293b; border-radius: 8px; padding: 16px; font-family: 'Courier New', monospace; font-size: 14px; color: #e2e8f0; margin-bottom: 24px;">
+                <pre style="margin: 0; white-space: pre-wrap;"># MoQ Configuration
+moqAddress: :4443        # WebTransport port for browsers
+moqEncryption: yes       # Enable TLS/HTTPS
+moqServerKey: /path/to/key.pem
+moqServerCert: /path/to/cert.pem
+moqAllowOrigin: '*'      # CORS configuration</pre>
+            </div>
+            
+            <h4 style="color: #374151; margin-top: 24px; margin-bottom: 16px; font-size: 16px;">Files Added</h4>
+            <div style="background: #f9fafb; border-radius: 8px; padding: 16px; font-family: monospace; font-size: 13px;">
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #059669;">internal/servers/moq/</strong> - MoQ server implementation
+                    <ul style="margin: 8px 0 0 24px; color: #6b7280;">
+                        <li><code>server.go</code> - Main MoQ server, handles QUIC/WebTransport listeners</li>
+                        <li><code>conn.go</code> - Connection management for native QUIC clients</li>
+                        <li><code>moq_session.go</code> - WebTransport session handling, protocol messages</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #059669;">internal/protocols/moq/</strong> - MoQ protocol implementation
+                    <ul style="margin: 8px 0 0 24px; color: #6b7280;">
+                        <li><code>message/</code> - MoQ message types (SETUP, SUBSCRIBE, ANNOUNCE)</li>
+                        <li><code>session.go</code> - Session state machine and lifecycle</li>
+                        <li><code>transport.go</code> - Transport abstraction for QUIC/WebTransport</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #059669;">MOQ_README.md</strong> - Comprehensive documentation
+                    <ul style="margin: 8px 0 0 24px; color: #6b7280;">
+                        <li>Architecture overview and design decisions</li>
+                        <li>Configuration and usage instructions</li>
+                        <li>Testing procedures and known issues</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h4 style="color: #374151; margin-top: 24px; margin-bottom: 16px; font-size: 16px;">Files Modified</h4>
+            <div style="background: #f9fafb; border-radius: 8px; padding: 16px; font-family: monospace; font-size: 13px;">
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #dc2626;">internal/core/core.go</strong>
+                    <ul style="margin: 8px 0 0 24px; color: #6b7280;">
+                        <li>Added MoQ server initialization in <code>Start()</code></li>
+                        <li>Integrated MoQ lifecycle with MediaMTX core</li>
+                        <li>Added MoQ to protocol list in <code>Close()</code></li>
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #dc2626;">internal/conf/conf.go</strong>
+                    <ul style="margin: 8px 0 0 24px; color: #6b7280;">
+                        <li>Added MoQ configuration parameters</li>
+                        <li><code>MoQ</code>, <code>MoQAddress</code>, <code>MoQAddressQuic</code></li>
+                        <li>TLS certificate configuration options</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #dc2626;">internal/defs/path.go</strong>
+                    <ul style="margin: 8px 0 0 24px; color: #6b7280;">
+                        <li>Added MoQ to <code>PathProtocol</code> enum</li>
+                        <li>Extended path routing to support MoQ endpoints</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #dc2626;">go.mod & go.sum</strong>
+                    <ul style="margin: 8px 0 0 24px; color: #6b7280;">
+                        <li>Added <code>github.com/quic-go/quic-go</code> for QUIC support</li>
+                        <li>Added <code>github.com/quic-go/webtransport-go</code> for browser support</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h4 style="color: #374151; margin-top: 24px; margin-bottom: 16px; font-size: 16px;">Key Implementation Details</h4>
+            <div style="background: #f0f9ff; border-radius: 8px; padding: 16px; font-size: 14px; line-height: 1.6;">
+                <ul style="margin: 0; padding-left: 20px; color: #1e40af;">
+                    <li><strong>Dual Transport:</strong> Port 4443 for WebTransport (browsers), Port 4444 for native QUIC</li>
+                    <li><strong>Path Integration:</strong> Seamlessly maps MediaMTX paths to MoQ broadcasts</li>
+                    <li><strong>Frame Handling:</strong> Converts H.264 NAL units to MoQ objects with group boundaries on keyframes</li>
+                    <li><strong>Error Recovery:</strong> Panic recovery, retry logic, and graceful degradation</li>
+                    <li><strong>Logging:</strong> Integrated with MediaMTX logging system, configurable verbosity</li>
+                    <li><strong>Testing:</strong> Compatible with moq-rs tools for validation</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+            <div>
+                <h4>Open Source Tools & Testing</h4>
+                <p><strong>Command Line Tools Used:</strong></p>
+                <ul style="font-size: 14px;">
+                    <li><code>moq-relay</code> - MoQ relay server from moq-rs</li>
+                    <li><code>moq-pub</code> - Publish media streams</li>
+                    <li><code>moq-sub</code> - Subscribe to streams</li>
+                    <li><code>hang</code> - Alternative MoQ client/server</li>
+                </ul>
+                
+                <p style="margin-top: 16px;"><strong>Testing & Development:</strong></p>
+                <ul style="font-size: 14px;">
+                    <li><a href="https://github.com/kixelated/moq">moq-rs</a> - Rust MoQ implementation & tools</li>
+                    <li><a href="https://github.com/bluenviron/mediamtx">MediaMTX</a> - Real-time media server</li>
+                    <li><a href="https://github.com/quic-go/quic-go">quic-go</a> - QUIC protocol implementation</li>
+                    <li><a href="https://github.com/quic-go/webtransport-go">webtransport-go</a> - WebTransport for browsers</li>
+                </ul>
+                
+                <p style="margin-top: 16px;"><strong>MoQ Resources:</strong></p>
+                <ul style="font-size: 14px;">
+                    <li><a href="https://developers.cloudflare.com/moq/">Cloudflare MoQ Documentation</a></li>
+                    <li><a href="https://blog.cloudflare.com/moq/">Cloudflare Blog: Media over QUIC</a></li>
+                    <li><a href="https://datatracker.ietf.org/wg/moq/about/">IETF MoQ Working Group</a></li>
+                    <li><a href="https://kixelated.github.io/moq-drafts/draft-lcurley-moq-lite.html">MoQ-Lite Specification</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4>Open Source Contribution</h4>
+                <p>This MoQ (Media over QUIC) implementation has been developed and freely contributed by <strong>WINK Streaming</strong> to the <a href="https://github.com/bluenviron/mediamtx">MediaMTX project</a> under the MIT License.</p>
+                
+                <p><strong>Acknowledgments:</strong></p>
+                <ul style="font-size: 14px;">
+                    <li>Facebook's <a href="https://github.com/facebookexperimental/moq-go-server">moq-go-server</a> for patterns</li>
+                    <li><a href="https://github.com/mengelbart/moqtransport">moqtransport</a> for IETF draft reference</li>
+                    <li><a href="https://github.com/kixelated/moq">kixelated</a> for moq-rs tools & testing</li>
+                    <li>Cloudflare for pioneering QUIC and HTTP/3</li>
+                </ul>
+                
+                <p style="margin-top: 16px;"><strong>Test Setup Commands:</strong></p>
+                <pre style="background: #f8f8f8; padding: 12px; border-radius: 4px; font-size: 12px; overflow-x: auto;">
+# Stream with FFmpeg
+ffmpeg -re -i video.mp4 \
+  -c:v libx264 -s 640x360 \
+  -f flv rtmp://localhost/mystream
+
+# Test with moq-rs tools
+./hang serve --addr :4443
+./hang publish video.mp4
+./hang subscribe --url https://localhost:4443/mystream</pre>
+                
+                <p style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e5e5;">
+                    <strong>License:</strong> MIT License<br>
+                    <strong>Repository:</strong> <a href="https://github.com/bluenviron/mediamtx">github.com/bluenviron/mediamtx</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- HLS.js for HLS playback -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- Chart.js for latency graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // HLS Player
+        let hls = null;
+        
+        function playHLS() {
+            const video = document.getElementById('hlsVideo');
+            const hlsUrl = 'https://moq.wink.co/mystream/index.m3u8';
+            
+            if (Hls.isSupported()) {
+                if (hls) {
+                    hls.destroy();
+                }
+                hls = new Hls({
+                    debug: false,
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                });
+                
+                hls.loadSource(hlsUrl);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    // Don't auto-play, let user click play
+                    // video.play();
+                    document.getElementById('hlsStatus').textContent = 'Ready';
+                });
+                
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    console.error('HLS Error:', data);
+                    document.getElementById('hlsStatus').textContent = 'Error: ' + data.type;
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // For Safari
+                video.src = hlsUrl;
+                video.addEventListener('loadedmetadata', function() {
+                    video.play();
+                    document.getElementById('hlsStatus').textContent = 'Playing';
+                });
+            }
+        }
+        
+        function stopHLS() {
+            const video = document.getElementById('hlsVideo');
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            video.pause();
+            video.src = '';
+            document.getElementById('hlsStatus').textContent = 'Stopped';
+        }
+        
+        // MoQ Player (WebTransport-based)
+        let moqTransport = null;
+        let videoDecoder = null;
+        let videoFrames = [];
+        let frameCount = 0;
+        
+        // Initialize WebCodecs decoder for H.264
+        let spsData = null;
+        let ppsData = null;
+        let decoderConfigured = false;
+        
+        // Audio decoder variables
+        let audioDecoder = null;
+        let audioConfigured = false;
+        let audioContext = null;
+        let audioWorklet = null;
+        
+        // Performance stats
+        let stats = {
+            framesDecoded: 0,
+            framesDropped: 0,
+            framesReceived: 0,
+            decodeTimeSum: 0,
+            decodeTimeCount: 0,
+            lastFrameTime: 0,
+            lastFrameTimestamp: 0,
+            frameTimestamps: [],
+            startTime: 0,
+            lastStatsUpdate: 0,
+            bufferLevel: 0,
+            isHardwareAccelerated: false,
+            expectedFrameCount: 0
+        };
+        
+        // Update stats display
+        function updateStats() {
+            const now = performance.now();
+            if (now - stats.lastStatsUpdate < 500) return; // Update every 500ms
+            stats.lastStatsUpdate = now;
+            
+            // Calculate FPS
+            const recentFrames = stats.frameTimestamps.filter(t => now - t < 1000);
+            const fps = recentFrames.length;
+            
+            // Calculate average decode time
+            const avgDecodeTime = stats.decodeTimeCount > 0 ? 
+                (stats.decodeTimeSum / stats.decodeTimeCount).toFixed(2) : '-';
+            
+            // Calculate latency (time since last frame)
+            const latency = stats.lastFrameTime > 0 ? 
+                Math.round(now - stats.lastFrameTime) : '-';
+            
+            // Calculate dropped frames (received - decoded)
+            const droppedFrames = Math.max(0, stats.framesReceived - stats.framesDecoded);
+            
+            // Update display
+            document.getElementById('framesDecoded').textContent = stats.framesDecoded;
+            document.getElementById('framesDropped').textContent = droppedFrames;
+            document.getElementById('decodeTime').textContent = avgDecodeTime + ' ms';
+            document.getElementById('latency').textContent = latency + ' ms';
+            document.getElementById('fps').textContent = fps;
+            
+            // Buffer level - check decoder queue size
+            if (videoDecoder) {
+                const queueSize = videoDecoder.decodeQueueSize || 0;
+                document.getElementById('bufferLevel').textContent = queueSize + ' frames';
+            } else {
+                document.getElementById('bufferLevel').textContent = '-';
+            }
+            
+            // Decoder info
+            if (videoDecoder) {
+                const state = videoDecoder.state || 'unconfigured';
+                document.getElementById('decoderInfo').textContent = state;
+                
+                // Check if hardware accelerated (heuristic based on decode time)
+                if (state === 'configured' && avgDecodeTime !== '-') {
+                    const decTime = parseFloat(avgDecodeTime);
+                    // Typically hardware decode is < 2ms, software is > 5ms
+                    if (decTime < 2) {
+                        document.getElementById('hwAccel').textContent = 'Yes (GPU)';
+                    } else if (decTime > 5) {
+                        document.getElementById('hwAccel').textContent = 'No (CPU)';
+                    } else {
+                        document.getElementById('hwAccel').textContent = 'Unknown';
+                    }
+                } else {
+                    document.getElementById('hwAccel').textContent = '-';
+                }
+            } else {
+                document.getElementById('decoderInfo').textContent = '-';
+                document.getElementById('hwAccel').textContent = '-';
+            }
+        }
+        
+        // Frame buffer for smooth playback
+        const frameBuffer = [];
+        let animationFrameId = null;
+        
+        function initializeDecoder() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 544;
+            canvas.height = 306;
+            canvas.style.width = '100%';
+            canvas.style.backgroundColor = '#000';
+            
+            // Replace MoQ video with canvas for decoded frames
+            const moqVideo = document.getElementById('moqVideo');
+            if (moqVideo) {
+                moqVideo.style.display = 'none';
+                moqVideo.parentElement.insertBefore(canvas, moqVideo.nextSibling);
+            }
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Simplified playback - display frames at 30fps
+            let lastFrameTime = 0;
+            const targetFrameInterval = 1000 / 30; // 33.33ms for 30fps
+            
+            function renderFrame() {
+                const now = performance.now();
+                
+                // Check if it's time for the next frame
+                if (now - lastFrameTime >= targetFrameInterval && frameBuffer.length > 0) {
+                    const frame = frameBuffer.shift();
+                    
+                    // Draw the frame
+                    ctx.drawImage(frame.frame, 0, 0, canvas.width, canvas.height);
+                    frame.frame.close();
+                    
+                    lastFrameTime = now;
+                    
+                    // Update stats
+                    stats.framesDecoded++;
+                    stats.lastFrameTime = now;
+                    stats.frameTimestamps.push(now);
+                    stats.frameTimestamps = stats.frameTimestamps.filter(t => now - t < 2000);
+                    
+                    if (stats.framesDecoded % 30 === 0) {
+                        updateStats();
+                    }
+                }
+                
+                // Drop old frames if buffer is too large
+                if (frameBuffer.length > 15) {
+                    console.warn(`Frame buffer overflow (${frameBuffer.length}), dropping old frames`);
+                    while (frameBuffer.length > 10) {
+                        const dropped = frameBuffer.shift();
+                        dropped.frame.close();
+                        stats.framesDropped++;
+                    }
+                }
+                
+                animationFrameId = requestAnimationFrame(renderFrame);
+            }
+            
+            // Start the render loop
+            renderFrame();
+            
+            // Create H.264 decoder
+            videoDecoder = new VideoDecoder({
+                output: (frame) => {
+                    // Add frame to buffer
+                    frameBuffer.push({
+                        frame: frame,
+                        timestamp: frame.timestamp
+                    });
+                    
+                    frameCount++;
+                    if (frameCount % 30 === 0) {
+                        console.log(`Buffered ${frameCount} frames, buffer size: ${frameBuffer.length}`);
+                    }
+                },
+                error: (error) => {
+                    console.error('Decoder error:', error);
+                    stats.framesDropped++;
+                    updateStats();
+                }
+            });
+            
+            console.log('Video decoder created, waiting for SPS/PPS');
+            
+            return canvas;
+        }
+        
+        let audioPlaybackTime = 0; // Track next audio playback time
+        let audioWorker = null; // Web Worker for audio processing
+        
+        async function initializeAudioDecoder() {
+            if (audioWorker) return;
+            
+            // Create audio context
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Resume audio context if suspended (required after user interaction)
+            if (audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                    console.log('Audio context resumed after user interaction');
+                } catch (error) {
+                    console.warn('Failed to resume audio context:', error);
+                }
+            }
+            
+            // Initialize audio playback time
+            audioPlaybackTime = audioContext.currentTime + 0.1; // Start with 100ms buffer
+            
+            // Create audio worker
+            try {
+                audioWorker = new Worker('audio-worker.js');
+                
+                // Handle messages from worker
+                audioWorker.onmessage = (event) => {
+                    const { type, data, error } = event.data;
+                    
+                    switch (type) {
+                        case 'workerReady':
+                            console.log('Audio worker ready');
+                            audioWorker.postMessage({ type: 'init' });
+                            break;
+                            
+                        case 'decoderReady':
+                            console.log('Audio decoder initialized in worker');
+                            // Configure with defaults
+                            audioWorker.postMessage({
+                                type: 'configure',
+                                data: { sampleRate: 44100, channels: 2 }
+                            });
+                            break;
+                            
+                        case 'configured':
+                            audioConfigured = true;
+                            console.log('Audio decoder configured in worker:', data ? data.config : 'no config data');
+                            break;
+                            
+                        case 'audioDecoded':
+                            playDecodedAudio(data);
+                            break;
+                            
+                        case 'audioError':
+                        case 'decodeError':
+                            console.error('Audio worker error:', error);
+                            break;
+                            
+                        case 'status':
+                            if (data.decodeCount % 100 === 0) {
+                                console.log(`Audio worker: ${data.decodeCount} frames decoded, queue: ${data.queueSize}`);
+                            }
+                            break;
+                    }
+                };
+                
+                audioWorker.onerror = (error) => {
+                    console.error('Audio worker error:', error);
+                };
+                
+            } catch (error) {
+                console.error('Failed to create audio worker:', error);
+                // Fall back to main thread decoder
+                audioDecoder = new AudioDecoder({
+                output: (audioData) => {
+                    // Track audio output frames
+                    audioFrameCount++;
+                    
+                    // Play decoded audio through Web Audio API
+                    const numberOfChannels = audioData.numberOfChannels;
+                    const sampleRate = audioData.sampleRate;
+                    const length = audioData.numberOfFrames;
+                    
+                    // Create audio buffer
+                    const audioBuffer = audioContext.createBuffer(
+                        numberOfChannels,
+                        length,
+                        sampleRate
+                    );
+                    
+                    // Copy audio data to buffer
+                    for (let channel = 0; channel < numberOfChannels; channel++) {
+                        const channelData = new Float32Array(length);
+                        audioData.copyTo(channelData, {planeIndex: channel});
+                        audioBuffer.copyToChannel(channelData, channel);
+                    }
+                    
+                    // Schedule audio playback sequentially
+                    const source = audioContext.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(audioContext.destination);
+                    
+                    // Schedule at next available time
+                    const currentTime = audioContext.currentTime;
+                    if (audioPlaybackTime < currentTime) {
+                        // We're behind, catch up with small buffer
+                        audioPlaybackTime = currentTime + 0.05;
+                    }
+                    
+                    // Safety check - don't schedule too far in the future
+                    if (audioPlaybackTime > currentTime + 10) {
+                        console.warn('Audio scheduling too far ahead, resetting');
+                        audioPlaybackTime = currentTime + 0.1;
+                    }
+                    
+                    try {
+                        source.start(audioPlaybackTime);
+                    } catch (e) {
+                        console.error('Failed to start audio source:', e);
+                        // Reset audio timing on error
+                        audioPlaybackTime = audioContext.currentTime + 0.1;
+                    }
+                    
+                    // Update next playback time (duration of this buffer)
+                    const duration = length / sampleRate;
+                    audioPlaybackTime += duration;
+                    
+                    // Log audio playback info periodically
+                    if (audioFrameCount % 50 === 0) {
+                        const latency = audioPlaybackTime - currentTime;
+                        console.log(`Audio frame ${audioFrameCount}: ${length} samples @ ${sampleRate}Hz, latency: ${(latency * 1000).toFixed(1)}ms`);
+                    }
+                    
+                    audioData.close();
+                },
+                error: (error) => {
+                    console.error('Audio decoder error:', error);
+                }
+            });
+            
+            console.log('Audio decoder created');
+            }
+        }
+        
+        // Play decoded audio from worker
+        function playDecodedAudio(data) {
+            if (!audioContext) return;
+            
+            const { channelData, sampleRate, numberOfChannels, length } = data;
+            
+            // Create audio buffer
+            const audioBuffer = audioContext.createBuffer(
+                numberOfChannels,
+                length,
+                sampleRate
+            );
+            
+            // Copy channel data
+            for (let channel = 0; channel < numberOfChannels; channel++) {
+                const float32Data = new Float32Array(channelData[channel]);
+                audioBuffer.copyToChannel(float32Data, channel);
+            }
+            
+            // Schedule playback
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+            
+            const currentTime = audioContext.currentTime;
+            if (audioPlaybackTime < currentTime) {
+                audioPlaybackTime = currentTime + 0.05;
+            }
+            
+            // Safety check
+            if (audioPlaybackTime > currentTime + 10) {
+                audioPlaybackTime = currentTime + 0.1;
+            }
+            
+            try {
+                source.start(audioPlaybackTime);
+                const duration = length / sampleRate;
+                audioPlaybackTime += duration;
+                
+                if (data.decodeCount % 50 === 0) {
+                    const latency = audioPlaybackTime - currentTime;
+                    console.log(`Audio playback: ${data.decodeCount} frames, latency: ${(latency * 1000).toFixed(1)}ms`);
+                }
+            } catch (e) {
+                console.error('Failed to play audio:', e);
+                audioPlaybackTime = audioContext.currentTime + 0.1;
+            }
+        }
+        
+        function configureDecoderWithSPSPPS(sps, pps) {
+            if (decoderConfigured || !videoDecoder) return;
+            
+            // Extract actual SPS data (skip start code if present)
+            let spsData = sps;
+            if (sps[0] === 0x00 && sps[1] === 0x00 && sps[2] === 0x00 && sps[3] === 0x01) {
+                spsData = sps.slice(4);
+            } else if (sps[0] === 0x00 && sps[1] === 0x00 && sps[2] === 0x01) {
+                spsData = sps.slice(3);
+            }
+            
+            let ppsData = pps;
+            if (pps[0] === 0x00 && pps[1] === 0x00 && pps[2] === 0x00 && pps[3] === 0x01) {
+                ppsData = pps.slice(4);
+            } else if (pps[0] === 0x00 && pps[1] === 0x00 && pps[2] === 0x01) {
+                ppsData = pps.slice(3);
+            }
+            
+            // Create AVC decoder configuration record
+            const avcConfig = new Uint8Array([
+                0x01, // configurationVersion
+                spsData[1], // AVCProfileIndication
+                spsData[2], // profile_compatibility  
+                spsData[3], // AVCLevelIndication
+                0xFF, // lengthSizeMinusOne (4 bytes)
+                0xE1, // numOfSequenceParameterSets (1)
+                (spsData.length >> 8) & 0xFF, // SPS length high byte
+                spsData.length & 0xFF, // SPS length low byte
+                ...spsData, // SPS data
+                0x01, // numOfPictureParameterSets
+                (ppsData.length >> 8) & 0xFF, // PPS length high byte
+                ppsData.length & 0xFF, // PPS length low byte
+                ...ppsData // PPS data
+            ]);
+            
+            // Build codec string from SPS
+            const profile = spsData[1].toString(16).padStart(2, '0');
+            const compat = spsData[2].toString(16).padStart(2, '0');
+            const level = spsData[3].toString(16).padStart(2, '0');
+            const codecString = `avc1.${profile}${compat}${level}`;
+            
+            // Try without description for Annex B format
+            const config = {
+                codec: codecString,
+                codedWidth: 544, // Updated for lower resolution stream
+                codedHeight: 306,
+                // Omit description to use Annex B format
+                hardwareAcceleration: 'prefer-hardware', // Use GPU for better performance
+                optimizeForLatency: true,
+                latencyHint: 'realtime', // Request realtime decoding
+            };
+            
+            console.log(`Configuring decoder with codec: ${codecString} (Annex B format)`);
+            
+            try {
+                videoDecoder.configure(config);
+                decoderConfigured = true;
+                console.log('Video decoder configured with SPS/PPS');
+            } catch (e) {
+                console.error('Failed to configure decoder:', e);
+                decoderConfigured = false;
+            }
+        }
+        
+        let audioEnabled = true; // Global flag for audio subscription
+        
+        async function connectMoQ(withAudio = true) {
+            const statusEl = document.getElementById('moqStatus');
+            const transportEl = document.getElementById('moqTransport');
+            const errorEl = document.getElementById('moqError');
+            const audioStatusEl = document.getElementById('audioStatus');
+            
+            // Set audio enabled flag
+            audioEnabled = withAudio;
+            
+            // Update audio status display
+            if (withAudio) {
+                audioStatusEl.textContent = '✅ Audio Enabled (AAC @ 44.1/48kHz)';
+                audioStatusEl.style.color = '#059669';
+            } else {
+                audioStatusEl.textContent = '🔇 Audio Disabled (Video Only)';
+                audioStatusEl.style.color = '#f59e0b';
+            }
+            
+            // Resume audio context on user interaction (required by browsers) - only if audio enabled
+            if (withAudio && audioContext && audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                    console.log('Audio context resumed on Connect button click');
+                } catch (e) {
+                    console.warn('Could not resume audio context:', e);
+                }
+            }
+            
+            // Reset stats
+            stats = {
+                framesDecoded: 0,
+                framesDropped: 0,
+                framesReceived: 0,
+                decodeTimeSum: 0,
+                decodeTimeCount: 0,
+                lastFrameTime: 0,
+                lastFrameTimestamp: 0,
+                frameTimestamps: [],
+                startTime: performance.now(),
+                lastStatsUpdate: 0,
+                bufferLevel: 0,
+                isHardwareAccelerated: false,
+                expectedFrameCount: 0
+            };
+            
+            // Start stats update interval
+            if (window.statsInterval) clearInterval(window.statsInterval);
+            window.statsInterval = setInterval(updateStats, 500);
+            
+            // Resume audio context on user interaction
+            if (audioContext && audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                    console.log('Audio context resumed on user click');
+                } catch (error) {
+                    console.warn('Failed to resume audio context:', error);
+                }
+            }
+            const serverStatusEl = document.getElementById('serverStatus');
+            const serverStatusTextEl = document.getElementById('serverStatusText');
+            
+            errorEl.classList.remove('show');
+            statusEl.textContent = 'Connecting...';
+            transportEl.textContent = 'Initializing...';
+            
+            try {
+                // Check if WebTransport is supported
+                if (!window.WebTransport) {
+                    throw new Error('WebTransport is not supported in this browser. Please use Chrome 97+ or Edge 97+');
+                }
+                
+                // Connect to MoQ server via WebTransport
+                const url = 'https://moq.wink.co:4443/moq';
+                moqTransport = new WebTransport(url);
+                
+                // Wait for connection
+                await moqTransport.ready;
+                
+                statusEl.textContent = 'Connected';
+                transportEl.textContent = 'WebTransport/QUIC';
+                serverStatusEl.className = 'moq-status moq-connected';
+                serverStatusTextEl.textContent = 'MoQ Server: Connected';
+                
+                // Implement basic MoQ protocol
+                console.log('MoQ WebTransport connected successfully');
+                
+                // Open bidirectional stream for control
+                const controlStream = await moqTransport.createBidirectionalStream();
+                const writer = controlStream.writable.getWriter();
+                const reader = controlStream.readable.getReader();
+                
+                // Send SETUP message
+                // Message type 0x01 for SETUP
+                const setupMsg = new Uint8Array([
+                    0x01,  // Message type: SETUP
+                    0xC0, 0xFF, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,  // Version: draft-01 (8-byte varint)
+                    0x02,  // Role: 0x02 for subscriber
+                ]);
+                
+                await writer.write(setupMsg);
+                console.log('MoQ SETUP message sent');
+                
+                // Read SETUP response
+                const response = await reader.read();
+                if (!response.done) {
+                    console.log('MoQ SETUP response received:', response.value);
+                    
+                    // Send SUBSCRIBE messages for video and audio tracks
+                    const namespace = "mystream";
+                    
+                    // Subscribe to video track
+                    const videoTrackName = "video";
+                    const videoSubscribeMsg = new Uint8Array([
+                        0x03,  // Message type: SUBSCRIBE
+                        0x01,  // Subscribe ID (varint) for video
+                        0x01,  // Track alias (varint) for video
+                        namespace.length, ...Array.from(new TextEncoder().encode(namespace)), // Namespace
+                        videoTrackName.length, ...Array.from(new TextEncoder().encode(videoTrackName))   // Track name
+                    ]);
+                    
+                    await writer.write(videoSubscribeMsg);
+                    console.log('MoQ SUBSCRIBE message sent for video track');
+                    
+                    // Subscribe to audio track only if enabled
+                    if (audioEnabled) {
+                        const audioTrackName = "audio";
+                        const audioSubscribeMsg = new Uint8Array([
+                            0x03,  // Message type: SUBSCRIBE
+                            0x02,  // Subscribe ID (varint) for audio
+                            0x02,  // Track alias (varint) for audio
+                            namespace.length, ...Array.from(new TextEncoder().encode(namespace)), // Namespace
+                            audioTrackName.length, ...Array.from(new TextEncoder().encode(audioTrackName))   // Track name
+                        ]);
+                        
+                        await writer.write(audioSubscribeMsg);
+                        console.log('MoQ SUBSCRIBE message sent for audio track');
+                    } else {
+                        console.log('Audio disabled - skipping audio subscription');
+                    }
+                    
+                    // Continue reading responses
+                    readMoQMessages(reader);
+                }
+                
+                console.log('MoQ protocol initialized');
+                
+            } catch (error) {
+                console.error('MoQ Connection Error:', error);
+                statusEl.textContent = 'Connection Failed';
+                transportEl.textContent = 'Error';
+                errorEl.textContent = `Error: ${error.message}`;
+                errorEl.classList.add('show');
+                serverStatusEl.className = 'moq-status moq-disconnected';
+                serverStatusTextEl.textContent = 'MoQ Server: Error';
+            }
+        }
+        
+        async function readMoQMessages(reader) {
+            try {
+                let messageCount = 0;
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    messageCount++;
+                    // Log first few messages in detail
+                    if (messageCount <= 5) {
+                        console.log(`MoQ message ${messageCount} received:`, value);
+                    }
+                    
+                    // Parse message type (first byte)
+                    if (value.length > 0) {
+                        const messageType = value[0];
+                        switch(messageType) {
+                            case 0x04: // SUBSCRIBE_OK
+                                console.log('SUBSCRIBE_OK received');
+                                // Start listening for media streams
+                                listenForMediaStreams();
+                                break;
+                            case 0x05: // SUBSCRIBE_ERROR
+                                console.error('SUBSCRIBE_ERROR received');
+                                break;
+                            default:
+                                // Could be media data or other messages
+                                if (messageCount % 100 === 0) {
+                                    console.log(`Received ${messageCount} MoQ messages`);
+                                }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error reading MoQ messages:', error);
+            }
+        }
+        
+        async function listenForMediaStreams() {
+            if (!moqTransport) return;
+            
+            console.log('Listening for MoQ media streams...');
+            
+            // Initialize video decoder
+            initializeDecoder();
+            
+            // Initialize audio decoder only if audio is enabled
+            if (audioEnabled) {
+                initializeAudioDecoder();
+            }
+            
+            // Accept incoming unidirectional streams (for media data)
+            const reader = moqTransport.incomingUnidirectionalStreams.getReader();
+            
+            try {
+                while (true) {
+                    const { value: stream, done } = await reader.read();
+                    if (done) break;
+                    
+                    console.log('New media stream received');
+                    handleMediaStream(stream);
+                }
+            } catch (error) {
+                console.error('Error accepting media streams:', error);
+            }
+        }
+        
+        // Read a varint from a buffer
+        function readVarInt(buffer, offset = 0) {
+            const firstByte = buffer[offset];
+            const length = 1 << (firstByte >> 6);
+            
+            if (offset + length > buffer.length) {
+                return null; // Not enough data
+            }
+            
+            let value = 0;
+            for (let i = 0; i < length; i++) {
+                value = (value << 8) | buffer[offset + i];
+            }
+            // Mask off the length bits from first byte
+            value &= (1 << (length * 8 - 2)) - 1;
+            
+            return { value, length };
+        }
+        
+        async function handleMediaStream(stream) {
+            const reader = stream.getReader();
+            let objectCount = 0;
+            let timestamp = 0;
+            let waitingForKeyframe = true;
+            let buffer = new Uint8Array(0);
+            
+            try {
+                while (true) {
+                    const { value: chunk, done } = await reader.read();
+                    if (done) break;
+                    
+                    // Append to buffer
+                    const newBuffer = new Uint8Array(buffer.length + chunk.length);
+                    newBuffer.set(buffer);
+                    newBuffer.set(chunk, buffer.length);
+                    buffer = newBuffer;
+                    
+                    // Process complete objects from buffer
+                    while (buffer.length > 0) {
+                        let offset = 0;
+                        
+                        // Read track alias
+                        const trackAlias = readVarInt(buffer, offset);
+                        if (!trackAlias) break;
+                        offset += trackAlias.length;
+                        
+                        // Read group ID
+                        const groupId = readVarInt(buffer, offset);
+                        if (!groupId) break;
+                        offset += groupId.length;
+                        
+                        // Read object ID
+                        const objectId = readVarInt(buffer, offset);
+                        if (!objectId) break;
+                        offset += objectId.length;
+                        
+                        // Read priority
+                        const priority = readVarInt(buffer, offset);
+                        if (!priority) break;
+                        offset += priority.length;
+                        
+                        // Read payload length
+                        const payloadLength = readVarInt(buffer, offset);
+                        if (!payloadLength) break;
+                        offset += payloadLength.length;
+                        
+                        // Check if we have the complete payload
+                        if (offset + payloadLength.value > buffer.length) break;
+                        
+                        // Extract the NAL unit data
+                        const value = buffer.slice(offset, offset + payloadLength.value);
+                        offset += payloadLength.value;
+                        
+                        // Remove processed data from buffer
+                        buffer = buffer.slice(offset);
+                        
+                        objectCount++;
+                        
+                        // Extract varint timestamp like moq-rs does
+                        let frameTimestamp = 0;
+                        let payloadData = value;
+                        
+                        // Read varint timestamp from beginning of payload
+                        const timestampResult = readVarInt(value, 0);
+                        if (timestampResult) {
+                            frameTimestamp = timestampResult.value;
+                            // Payload data starts after varint timestamp
+                            payloadData = value.slice(timestampResult.length);
+                        }
+                        
+                        // Handle based on track alias (1=video, 2=audio)
+                        if (trackAlias.value === 2) {
+                            // Audio track - skip if audio disabled
+                            if (!audioEnabled) {
+                                continue;
+                            }
+                            handleAudioData(payloadData, frameTimestamp, objectId.value === 0);
+                            continue;
+                        }
+                        
+                        // Video track handling (existing code)
+                        const nalData = payloadData;
+                        
+                        // Log first few objects with NAL type info
+                        if (objectCount <= 10 && nalData.length > 0) {
+                            // Check NAL type - with start codes, NAL type is at byte 4
+                            let nalType = 0;
+                            if (nalData.length > 4 && nalData[0] === 0 && nalData[1] === 0 && 
+                                nalData[2] === 0 && nalData[3] === 1) {
+                                nalType = nalData[4] & 0x1F;
+                            } else if (nalData.length > 0) {
+                                nalType = nalData[0] & 0x1F;
+                            }
+                            const hexBytes = Array.from(nalData.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                            console.log(`Object ${objectCount} (G:${groupId.value}/O:${objectId.value}): ${nalData.length} bytes, NAL type: ${nalType}, timestamp: ${frameTimestamp}, first bytes: ${hexBytes}`);
+                        }
+                        
+                        // Try to decode as H.264 frame
+                        if (nalData.length > 0) {
+                            try {
+                            // Check NAL type - with start codes, NAL type is at byte 4
+                            // Frame format: 0x00 0x00 0x00 0x01 [NAL byte] ...
+                            let nalType = 0;
+                            if (nalData.length > 4 && nalData[0] === 0 && nalData[1] === 0 && 
+                                nalData[2] === 0 && nalData[3] === 1) {
+                                nalType = nalData[4] & 0x1F;
+                            } else if (nalData.length > 0) {
+                                // Fallback if no start code
+                                nalType = nalData[0] & 0x1F;
+                            }
+                            
+                            // Handle SPS (7)
+                            if (nalType === 7) {
+                                if (!spsData && nalData.length < 1000) {
+                                    // Small SPS-only object for configuration
+                                    spsData = new Uint8Array(nalData);
+                                    console.log('Received SPS:', spsData.length, 'bytes');
+                                    if (spsData && ppsData) {
+                                        configureDecoderWithSPSPPS(spsData, ppsData);
+                                    }
+                                    continue;
+                                }
+                                // Large SPS indicates a complete frame with SPS prefix - continue to decode
+                            }
+                            
+                            // Handle PPS (8)
+                            if (nalType === 8) {
+                                if (!ppsData) {
+                                    ppsData = new Uint8Array(nalData);
+                                    console.log('Received PPS:', ppsData.length, 'bytes');
+                                    if (spsData && ppsData) {
+                                        configureDecoderWithSPSPPS(spsData, ppsData);
+                                    }
+                                }
+                                continue;
+                            }
+                            
+                            // Only decode if we have configured the decoder
+                            if (decoderConfigured && videoDecoder) {
+                                // Check if frame contains an IDR NAL unit (type 5)
+                            // In moq-rs pattern, first frame in group (objectId === 0) is keyframe
+                            // Server creates new groups on IDR frames
+                            const isKeyframe = (objectId.value === 0);
+                            
+                            // Wait for first keyframe after configuration
+                            if (waitingForKeyframe && !isKeyframe) {
+                                if (objectCount <= 20) {
+                                    console.log(`Skipping object ${objectId.value} in group ${groupId.value} while waiting for keyframe`);
+                                }
+                                continue;
+                            }
+                            
+                            if (isKeyframe && waitingForKeyframe) {
+                                console.log(`Received first keyframe at group ${groupId.value}, object 0 (${nalData.length} bytes) - starting decode`);
+                                // Log first few bytes to debug content
+                                const preview = Array.from(nalData.slice(0, 32)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                                console.log(`Keyframe preview: ${preview}`);
+                                waitingForKeyframe = false;
+                                // Ensure decoder is ready for the first keyframe
+                                if (!decoderConfigured && spsData && ppsData) {
+                                    configureDecoderWithSPSPPS(spsData, ppsData);
+                                }
+                            }
+                                
+                                // Set chunk type based on object position in group
+                                const chunkType = isKeyframe ? 'key' : 'delta';
+                                
+                                // Create EncodedVideoChunk with extracted timestamp
+                                const chunk = new EncodedVideoChunk({
+                                    type: chunkType,
+                                    timestamp: frameTimestamp,
+                                    data: nalData
+                                });
+                                
+                                if (objectCount <= 5 || (chunkType === 'key' && objectCount % 100 === 0)) {
+                                    console.log(`Decoding ${chunkType} frame (obj:${objectId.value}, grp:${groupId.value}) at timestamp ${frameTimestamp}`);
+                                }
+                                
+                                // Check decoder state before decoding
+                                if (!videoDecoder || videoDecoder.state === 'closed') {
+                                    console.log('Decoder is closed or missing, reinitializing...');
+                                    initializeDecoder();
+                                    if (spsData && ppsData) {
+                                        configureDecoderWithSPSPPS(spsData, ppsData);
+                                        // Wait a bit for configuration to complete
+                                        await new Promise(resolve => setTimeout(resolve, 10));
+                                    }
+                                }
+                                
+                                if (videoDecoder && videoDecoder.state === 'configured') {
+                                    stats.framesReceived++;
+                                    // Check if decoder queue is getting full (likely dropping frames)
+                                    const queueSize = videoDecoder.decodeQueueSize || 0;
+                                    if (queueSize > 10) {
+                                        console.warn(`Decoder queue full: ${queueSize} frames queued, dropping frame`);
+                                        stats.framesDropped++;
+                                        return; // Skip this frame
+                                    }
+                                    try {
+                                        videoDecoder.decode(chunk);
+                                        stats.framesDecoded++;
+                                    } catch (e) {
+                                        console.error('Failed to decode chunk:', e);
+                                        stats.framesDropped++;
+                                    }
+                                } else {
+                                    console.warn(`Decoder not ready (state: ${videoDecoder?.state}), skipping chunk`);
+                                    stats.framesDropped++;
+                                }
+                                // timestamp is now extracted from the stream, no need to increment
+                            }
+                        } catch (decodeError) {
+                            console.error('Decode error for object', objectCount, ':', decodeError);
+                            // Log more details for debugging
+                            console.error('Chunk details:', {
+                                type: chunkType,
+                                timestamp: frameTimestamp,
+                                dataLength: nalData.length,
+                                firstBytes: Array.from(nalData.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+                            });
+                        }
+                    }
+                    
+                    if (objectCount % 30 === 0) {
+                            console.log(`Received ${objectCount} media objects (~${objectCount/30}s of video)`);
+                            document.getElementById('moqStatus').textContent = `Streaming (${objectCount} objects)`;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error reading media stream:', error);
+            }
+            
+            console.log(`Media stream ended after ${objectCount} objects`);
+        }
+        
+        // Handle incoming audio data
+        let audioFrameCount = 0;
+        function handleAudioData(audioData, timestamp, isKeyframe) {
+            audioFrameCount++;
+            
+            // Skip first frame if it's config data
+            if (!audioConfigured) {
+                if (audioData.length < 100) {
+                    // This might be AAC AudioSpecificConfig, skip it
+                    console.log('Skipping potential AAC config:', audioData.length, 'bytes');
+                    audioConfigured = true; // Mark as configured
+                    configureAudioDecoder(null); // Use defaults
+                    return;
+                }
+                // Configure with defaults on first real audio frame
+                console.log('Configuring audio decoder with defaults');
+                configureAudioDecoder(null);
+            }
+            
+            // Check for ADTS header and remove it if present
+            let cleanAudioData = audioData;
+            
+            // ADTS header starts with sync word 0xFFF (12 bits)
+            if (audioData.length >= 7 && 
+                audioData[0] === 0xFF && (audioData[1] & 0xF0) === 0xF0) {
+                
+                // Extract frame length from ADTS header
+                const frameLength = ((audioData[3] & 0x03) << 11) | 
+                                  (audioData[4] << 3) | 
+                                  ((audioData[5] & 0xE0) >> 5);
+                
+                // Skip ADTS header (7 bytes normally)
+                const headerLength = 7;
+                if (frameLength > headerLength && frameLength <= audioData.length) {
+                    cleanAudioData = audioData.slice(headerLength, frameLength);
+                    if (audioFrameCount <= 3) {
+                        console.log('Removed ADTS header, frame length:', frameLength, 
+                            'clean data:', cleanAudioData.length, 'bytes');
+                    }
+                }
+            }
+            
+            // Use worker if available, otherwise fall back to main thread
+            if (audioWorker && audioConfigured) {
+                // Send to worker for processing
+                audioWorker.postMessage({
+                    type: 'decode',
+                    data: {
+                        audioData: cleanAudioData,
+                        timestamp: timestamp
+                    }
+                });
+                
+                if (audioFrameCount % 100 === 0) {
+                    console.log(`Sent ${audioFrameCount} audio frames to worker`);
+                }
+            } else if (audioDecoder && audioDecoder.state === 'configured') {
+                try {
+                    
+                    // AAC data should be raw AAC frames without ADTS headers
+                    const chunk = new EncodedAudioChunk({
+                        type: 'key', // AAC doesn't really have key frames
+                        timestamp: timestamp,
+                        data: cleanAudioData
+                    });
+                    
+                    // Check decoder queue to prevent overwhelming it
+                    const queueSize = audioDecoder.decodeQueueSize || 0;
+                    if (queueSize > 5) {
+                        console.warn(`Audio decoder queue full: ${queueSize} frames, skipping`);
+                        audioFrameErrors++;
+                        return;
+                    }
+                    
+                    audioDecoder.decode(chunk);
+                    
+                    if (audioFrameCount % 100 === 0) {
+                        console.log(`Decoded ${audioFrameCount} audio frames, queue: ${queueSize}`);
+                    }
+                } catch (error) {
+                    console.error('Audio decode error for frame', audioFrameCount, ':', error);
+                    if (audioFrameCount <= 5) {
+                        console.log('Audio data length:', audioData.length, 
+                            'First bytes:', Array.from(audioData.slice(0, 16))
+                                .map(b => b.toString(16).padStart(2, '0')).join(' '));
+                        console.log('Clean data length:', cleanAudioData.length,
+                            'First bytes:', Array.from(cleanAudioData.slice(0, 16))
+                                .map(b => b.toString(16).padStart(2, '0')).join(' '));
+                    }
+                }
+            }
+        }
+        
+        function configureAudioDecoder(configData) {
+            if (audioConfigured || !audioDecoder) return;
+            
+            try {
+                // Parse AudioSpecificConfig if provided
+                let sampleRate = 44100;  // Default to 44.1kHz (what FFmpeg is using)
+                let channels = 2;
+                
+                if (configData && configData.length >= 2) {
+                    // AudioSpecificConfig format:
+                    // 5 bits: audioObjectType
+                    // 4 bits: samplingFrequencyIndex
+                    // 4 bits: channelConfiguration
+                    const byte1 = configData[0];
+                    const byte2 = configData[1];
+                    
+                    const samplingFrequencyIndex = ((byte1 & 0x07) << 1) | ((byte2 & 0x80) >> 7);
+                    const channelConfig = (byte2 & 0x78) >> 3;
+                    
+                    // Sample rate lookup table
+                    const sampleRates = [96000, 88200, 64000, 48000, 44100, 32000, 
+                                        24000, 22050, 16000, 12000, 11025, 8000, 7350];
+                    
+                    if (samplingFrequencyIndex < sampleRates.length) {
+                        sampleRate = sampleRates[samplingFrequencyIndex];
+                    }
+                    
+                    if (channelConfig > 0 && channelConfig < 8) {
+                        channels = channelConfig;
+                    }
+                    
+                    console.log('Parsed AudioSpecificConfig: sampleRate=' + sampleRate + 
+                               ', channels=' + channels);
+                }
+                
+                // Configure for AAC-LC
+                const config = {
+                    codec: 'mp4a.40.2',  // AAC-LC
+                    sampleRate: sampleRate,
+                    numberOfChannels: channels
+                };
+                
+                // Don't include description - let decoder handle raw AAC
+                // if (configData && configData.length > 0) {
+                //     config.description = configData;
+                // }
+                
+                audioDecoder.configure(config);
+                audioConfigured = true;
+                console.log('Audio decoder configured without description: sampleRate=' + sampleRate + ', channels=' + channels);
+            } catch (error) {
+                console.error('Failed to configure audio decoder:', error);
+                // Try without description if it fails
+                try {
+                    const fallbackConfig = {
+                        codec: 'mp4a.40.2',
+                        sampleRate: 48000,
+                        numberOfChannels: 2
+                    };
+                    audioDecoder.configure(fallbackConfig);
+                    audioConfigured = true;
+                    console.log('Audio decoder configured with fallback settings');
+                } catch (e2) {
+                    console.error('Audio decoder fallback also failed:', e2);
+                }
+            }
+        }
+        
+        async function disconnectMoQ() {
+            // Stop animation frame
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // Clear frame buffer
+            while (frameBuffer.length > 0) {
+                const frame = frameBuffer.shift();
+                frame.frame.close();
+            }
+            
+            // Reset audio timing
+            audioPlaybackTime = 0;
+            
+            if (videoDecoder) {
+                videoDecoder.close();
+                videoDecoder = null;
+            }
+            
+            // Clean up audio worker or decoder
+            if (audioWorker) {
+                audioWorker.postMessage({ type: 'reset' });
+                audioWorker.terminate();
+                audioWorker = null;
+            }
+            if (audioDecoder) {
+                audioDecoder.close();
+                audioDecoder = null;
+            }
+            // Reset decoder state
+            spsData = null;
+            ppsData = null;
+            decoderConfigured = false;
+            audioConfigured = false;
+            frameCount = 0;
+            
+            // Clear stats interval
+            if (window.statsInterval) {
+                clearInterval(window.statsInterval);
+                window.statsInterval = null;
+            }
+            
+            // Reset stats display
+            document.getElementById('decoderInfo').textContent = '-';
+            document.getElementById('hwAccel').textContent = '-';
+            document.getElementById('framesDecoded').textContent = '0';
+            document.getElementById('framesDropped').textContent = '0';
+            document.getElementById('decodeTime').textContent = '-';
+            document.getElementById('latency').textContent = '-';
+            document.getElementById('bufferLevel').textContent = '-';
+            document.getElementById('fps').textContent = '-';
+            
+            if (moqTransport) {
+                await moqTransport.close();
+                moqTransport = null;
+            }
+            // Remove canvas and restore MoQ video element
+            const moqVideo = document.getElementById('moqVideo');
+            if (moqVideo && moqVideo.parentElement) {
+                const canvas = moqVideo.parentElement.querySelector('canvas');
+                if (canvas) {
+                    canvas.remove();
+                }
+                moqVideo.style.display = 'block';
+            }
+            
+            document.getElementById('moqStatus').textContent = 'Disconnected';
+            document.getElementById('moqTransport').textContent = '-';
+            document.getElementById('serverStatus').className = 'moq-status moq-disconnected';
+            document.getElementById('serverStatusText').textContent = 'MoQ Server: Disconnected';
+        }
+        
+        // Check server status on load
+        async function checkServerStatus() {
+            const serverStatusEl = document.getElementById('serverStatus');
+            const serverStatusTextEl = document.getElementById('serverStatusText');
+            
+            try {
+                // Try to fetch from the HLS endpoint as a basic connectivity test
+                const response = await fetch('https://moq.wink.co:8888/mystream/', {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                
+                serverStatusEl.className = 'moq-status moq-connecting';
+                serverStatusTextEl.textContent = 'MoQ Server: Ready (Port 4443)';
+            } catch (error) {
+                serverStatusEl.className = 'moq-status moq-disconnected';
+                serverStatusTextEl.textContent = 'MoQ Server: Check Connection';
+            }
+        }
+        
+        // Initialize latency comparison chart
+        function initLatencyChart() {
+            const ctx = document.getElementById('latencyChart').getContext('2d');
+            
+            // Realistic latency data based on typical deployments
+            const latencyData = {
+                labels: ['MoQ\n(Native)', 'WebRTC', 'SRT', 'RTMP', 'LL-HLS', 'HLS', 'DASH'],
+                datasets: [{
+                    label: 'Best Case (ms)',
+                    data: [150, 200, 250, 1000, 2000, 4000, 3000],
+                    backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                    borderColor: 'rgba(34, 197, 94, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Typical (ms)',
+                    data: [250, 500, 500, 3000, 4000, 8000, 6000],
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Worst Case (ms)',
+                    data: [500, 2000, 1000, 5000, 8000, 20000, 15000],
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 1
+                }]
+            };
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: latencyData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y < 1000) {
+                                        label += context.parsed.y + ' ms';
+                                    } else {
+                                        label += (context.parsed.y / 1000).toFixed(1) + ' seconds';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Latency (log scale)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value === 100) return '100ms';
+                                    if (value === 1000) return '1s';
+                                    if (value === 10000) return '10s';
+                                    if (value === 100000) return '100s';
+                                    return value + 'ms';
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Streaming Protocol'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Auto-play HLS on load
+        window.addEventListener('load', () => {
+            playHLS();
+            checkServerStatus();
+            
+            // Initialize latency comparison chart
+            initLatencyChart();
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (hls) {
+                hls.destroy();
+            }
+            if (moqTransport) {
+                moqTransport.close();
+            }
+        });
+    </script>
+</body>
+</html>
